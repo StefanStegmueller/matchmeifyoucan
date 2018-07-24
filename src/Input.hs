@@ -4,22 +4,16 @@ module Input
     )
 where
 
-import           System.IO
+import           Control.Concurrent
+import           Control.Monad
 
-data Input = Up
-    | Down
-    | Left'
-    | Right'
+data Input = Match
     | Exit
     deriving (Eq)
 
-getInput :: IO Input
-getInput = do
+getInput :: MVar Input -> IO ()
+getInput var = forever $ do
     char <- getChar
     case char of
-        'q' -> return Exit
-        'w' -> return Up
-        's' -> return Down
-        'a' -> return Left'
-        'd' -> return Right'
-        _   -> getInput
+        'q' -> putMVar var Exit
+        'm' -> putMVar var Match

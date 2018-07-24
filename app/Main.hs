@@ -1,9 +1,11 @@
 module Main where
 
 import           Input
-import           World
+import           Screen
 import           System.Console.ANSI
 import           System.IO
+import           Control.Concurrent
+import           Control.Monad
 
 main :: IO ()
 main = do
@@ -11,24 +13,27 @@ main = do
     hSetBuffering stdin  NoBuffering
     hSetBuffering stdout NoBuffering
     hideCursor
-    setTitle "Thieflike"
-    gameLoop $ World (0, 0) (0, 0)
+    setTitle "MatchMeIfYouCan"
+    var <- newEmptyMVar
+    forkIO $ gameLoop var initialScreen
+    getInput var
 
-gameLoop :: World -> IO ()
-gameLoop world@(World hero enemy) = do
-    drawHero hero
-    drawSymbol enemy 'e'
-    input <- getInput
-    case input of
-        Exit -> handleExit
-        _    -> gameLoop $ handleDirection world input
+gameLoop :: MVar Input -> Screen -> IO ()
+gameLoop var screen = do
+    threadDelay 66666
+    drawScreen screen
+    input <- tryTakeMVar var
+    handleExit input
+    gameLoop var (moveObjects screen input)
 
--- when the user wants to exit we give them a thank you
--- message and then reshow the cursor
-handleExit :: IO ()
-handleExit = do
+handleExit :: Maybe Input -> IO ()
+handleExit (Just Exit) = do
     clearScreen
     setCursorPosition 0 0
     showCursor
     putStrLn "Thank you for playing!"
+    threadId <- myThreadId
+    killThread threadId
+handleExit _ = return ()
+
 
