@@ -11,7 +11,7 @@ main :: IO ()
 main = do
     hSetEcho stdin False
     hSetBuffering stdin  NoBuffering
-    hSetBuffering stdout NoBuffering
+    hSetBuffering stdout (BlockBuffering (Just (80 * 20)))
     hideCursor
     setTitle "MatchMeIfYouCan"
     var <- newEmptyMVar
@@ -19,8 +19,8 @@ main = do
     getInput var
 
 gameLoop :: MVar Input -> Screen -> IO ()
-gameLoop var screen = do
-    threadDelay 66666
+gameLoop var screen@(Screen _ _ _ score) = do
+    threadDelay $ fpsToMicSec $ evalSpeed score
     drawScreen screen
     input <- tryTakeMVar var
     handleExit input
@@ -36,4 +36,10 @@ handleExit (Just Exit) = do
     killThread threadId
 handleExit _ = return ()
 
+fpsToMicSec :: Int -> Int
+fpsToMicSec fps = 1000000 `div` fps
+
+evalSpeed :: Int -> Int
+evalSpeed 0     = 15
+evalSpeed score = 15 * (score + 1)
 

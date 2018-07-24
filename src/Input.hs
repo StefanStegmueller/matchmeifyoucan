@@ -17,3 +17,4 @@ getInput var = forever $ do
     case char of
         'q' -> putMVar var Exit
         'm' -> putMVar var Match
+        _   -> return ()

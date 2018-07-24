@@ -34,13 +34,20 @@ initialScreen = Screen
         }
 
 drawScreen :: Screen -> IO ()
-drawScreen (Screen topObject botObject _ count) = do
+drawScreen (Screen topObject botObject state count) = do
         clearScreen
+        evalSGR state
         drawLine 0
         drawLine screenHeight
-        drawSymbol topObject   ['+']
-        drawSymbol botObject   ['+']
-        drawSymbol countObject (show count)
+        draw topObject   ['+']
+        draw botObject   ['+']
+        draw countObject (show count)
+
+evalSGR :: State -> IO ()
+evalSGR Idle = setSGR
+        [SetConsoleIntensity NormalIntensity, SetColor Foreground Vivid White]
+evalSGR Matching = setSGR
+        [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Red]
 
 moveObjects :: Screen -> Maybe Input -> Screen
 moveObjects screen@(Screen _ _ state _) maybeInput
@@ -101,16 +108,12 @@ drawLine y = drawLine' (screenWidth, y)
     where
         drawLine' (0, _) = return ()
         drawLine' (x, y) = do
-                drawSymbol (x, y) ['-']
+                draw (x, y) ['-']
                 drawLine' (x - 1, y)
 
 
-drawSymbol :: Coord -> [Char] -> IO ()
-drawSymbol (x, y) symbol = do
+draw :: Coord -> String -> IO ()
+draw (x, y) symbol = do
         setCursorPosition y x
-        setSGR
-                [ SetConsoleIntensity BoldIntensity
-                , SetColor Foreground Vivid Blue
-                ]
         putStr symbol
 
