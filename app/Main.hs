@@ -2,6 +2,7 @@ module Main where
 
 import           Input
 import           Screen
+import           Mechanics
 import           System.Console.ANSI
 import           System.IO
 import           Control.Concurrent
@@ -11,20 +12,20 @@ main :: IO ()
 main = do
     hSetEcho stdin False
     hSetBuffering stdin  NoBuffering
-    hSetBuffering stdout (BlockBuffering (Just (80 * 20)))
+    hSetBuffering stdout NoBuffering
     hideCursor
     setTitle "MatchMeIfYouCan"
     var <- newEmptyMVar
-    forkIO $ gameLoop var initialScreen
+    forkIO $ gameLoop var initState
     getInput var
 
-gameLoop :: MVar Input -> Screen -> IO ()
-gameLoop var screen@(Screen _ _ _ score) = do
+gameLoop :: MVar Input -> State -> IO ()
+gameLoop var state@(State _ _ _ score) = do
     threadDelay $ fpsToMicSec $ evalSpeed score
-    drawScreen screen
+    drawScreen state
     input <- tryTakeMVar var
     handleExit input
-    gameLoop var (moveObjects screen input)
+    gameLoop var (moveObjects state input)
 
 handleExit :: Maybe Input -> IO ()
 handleExit (Just Exit) = do
