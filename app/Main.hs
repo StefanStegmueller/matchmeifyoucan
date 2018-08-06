@@ -21,7 +21,7 @@ main = do
 
 gameLoop :: MVar Input -> State -> IO ()
 gameLoop var state@(State _ _ _ score) = do
-    threadDelay $ fpsToMicSec $ evalSpeed score
+    threadDelay $ fpsToMicSec $ evalFps score
     drawScreen state
     input <- tryTakeMVar var
     handleExit input
@@ -40,7 +40,7 @@ handleExit _ = return ()
 fpsToMicSec :: Int -> Int
 fpsToMicSec fps = 1000000 `div` fps
 
-evalSpeed :: Int -> Int
-evalSpeed 0     = 15
-evalSpeed score = 15 * (score + 1)
+evalFps :: Int -> Int
+evalFps 0 = 15
+evalFps _ = 15
 

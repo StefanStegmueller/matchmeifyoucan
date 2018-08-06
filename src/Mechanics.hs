@@ -26,12 +26,30 @@ initState = State
     }
 
 moveObjects :: State -> Maybe Input -> State
-moveObjects state@(State _ _ move _) maybeInput
-    | move == Idle && isNothing maybeInput = moveSideways state
-    | otherwise                            = evalMatch $ moveMatch state
+moveObjects state@(State _ _ move score) maybeInput
+    | move /= Matching && isNothing maybeInput = moveIdle
+        state
+        (evalIdleMovement score)
+    | otherwise = evalMatch $ moveMatch state
 
-moveSideways :: State -> State
-moveSideways (State topObject botObject move score) = State
+evalIdleMovement :: Int -> (Int -> Int)
+evalIdleMovement score | score > 4 = \x -> iterate decObjectHorizontal x !! 4
+                       | score > 3 = \x -> iterate incObjectHorizontal x !! 4
+                       | score > 2 = \x -> iterate decObjectHorizontal x !! 2
+                       | score > 1 = \x -> iterate incObjectHorizontal x !! 2
+                       | score > 0 = decObjectHorizontal
+                       | otherwise = incObjectHorizontal
+
+decObjectHorizontal :: Int -> Int
+decObjectHorizontal i | i <= 0    = screenWidth
+                      | otherwise = i - 1
+
+incObjectHorizontal :: Int -> Int
+incObjectHorizontal i | i >= screenWidth = 0
+                      | otherwise        = i + 1
+
+moveIdle :: State -> (Int -> Int) -> State
+moveIdle (State topObject botObject move score) moveFunc = State
     { sTopObject = newCoordTop
     , sBotObject = newCoordBot
     , sMove      = move
@@ -41,11 +59,7 @@ moveSideways (State topObject botObject move score) = State
     newCoordTop = (newX, y)
     newCoordBot = (screenWidth - newX, screenHeight)
     (x, y)      = topObject
-    newX        = incObjectHorizontal x
-
-incObjectHorizontal :: Int -> Int
-incObjectHorizontal i | i == screenWidth = 0
-                      | otherwise        = i + 1
+    newX        = moveFunc x
 
 moveMatch :: State -> State
 moveMatch (State topObject botObject move score) = State
