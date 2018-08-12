@@ -48,7 +48,7 @@ drawDefeat score =
 drawScore :: Int -> IO ()
 drawScore score =
         draw textPosition
-                $  "Level: "
+                $  "Match Me If You Can.\n Level: "
                 ++ show score
                 ++ " - "
                 ++ (levelDescriptions !! score)
@@ -58,9 +58,9 @@ evalSGR :: Move -> IO ()
 evalSGR Idle = setSGR
         [SetConsoleIntensity NormalIntensity, SetColor Foreground Vivid White]
 evalSGR Matching = setSGR
-        [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Red]
-evalSGR _ = setSGR
         [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Green]
+evalSGR _ = setSGR
+        [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Red]
 
 drawLine :: Int -> IO ()
 drawLine y = drawLine' (screenWidth, y)
