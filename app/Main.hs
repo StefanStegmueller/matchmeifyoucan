@@ -20,27 +20,13 @@ main = do
     getInput var
 
 gameLoop :: MVar Input -> State -> IO ()
-gameLoop var state@(State _ _ _ score) = do
-    threadDelay $ fpsToMicSec $ evalFps score
+gameLoop var state = do
+    threadDelay $ fpsToMicSec 15
     drawScreen state
     input <- tryTakeMVar var
-    handleExit input
-    gameLoop var (moveObjects state input)
-
-handleExit :: Maybe Input -> IO ()
-handleExit (Just Exit) = do
-    clearScreen
-    setCursorPosition 0 0
-    showCursor
-    putStrLn "Thank you for playing!"
-    threadId <- myThreadId
-    killThread threadId
-handleExit _ = return ()
+    if input == Just Restart
+        then gameLoop var initState
+        else gameLoop var (moveObjects state input)
 
 fpsToMicSec :: Int -> Int
 fpsToMicSec fps = 1000000 `div` fps
-
-evalFps :: Int -> Int
-evalFps 0 = 15
-evalFps _ = 15
-

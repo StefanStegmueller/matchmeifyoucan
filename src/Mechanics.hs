@@ -14,6 +14,7 @@ import           Internal
 type Coord = (Int, Int)
 data Move = Idle
         | Matching
+        | Stop
         deriving(Eq)
 data State = State { sTopObject :: Coord, sBotObject :: Coord, sMove :: Move, sScore :: Int }
 
@@ -26,11 +27,12 @@ initState = State
     }
 
 moveObjects :: State -> Maybe Input -> State
-moveObjects state@(State _ _ move score) maybeInput
-    | move /= Matching && isNothing maybeInput = moveIdle
+moveObjects state@(State topObject botObject move score) maybeInput
+    | move == Idle && isNothing maybeInput = moveIdle
         state
         (evalIdleMovement score)
-    | otherwise = evalMatch $ moveMatch state
+    | move == Matching || maybeInput == Just Match = evalMatch $ moveMatch state
+    | otherwise = state
 
 evalIdleMovement :: Int -> (Int -> Int)
 evalIdleMovement score | score > 4 = \x -> iterate decObjectHorizontal x !! 4
@@ -56,39 +58,47 @@ moveIdle (State topObject botObject move score) moveFunc = State
     , sScore     = score
     }
   where
-    newCoordTop = (newX, y)
+    newCoordTop = (newX, 0)
     newCoordBot = (screenWidth - newX, screenHeight)
-    (x, y)      = topObject
+    (x, _)      = topObject
     newX        = moveFunc x
 
 moveMatch :: State -> State
 moveMatch (State topObject botObject move score) = State
     { sTopObject = newCoordTop
     , sBotObject = newCoordBot
-    , sMove      = newMove
+    , sMove      = move
     , sScore     = score
     }
   where
-    newCoordTop     = (xT, newY)
-    newCoordBot     = (xB, screenHeight - newY)
-    (xT  , yT     ) = topObject
-    (xB  , _      ) = botObject
-    (newY, newMove) = incObjectVertical yT
+    newCoordTop = (xT, newY)
+    newCoordBot = (xB, screenHeight - newY)
+    (xT, yT)    = topObject
+    (xB, _ )    = botObject
+    newY        = incObjectVertical yT
 
-incObjectVertical :: Int -> (Int, Move)
-incObjectVertical i | i == (screenHeight `div` 2) = (0, Idle)
-                    | otherwise                   = (i + 1, Matching)
+incObjectVertical :: Int -> Int
+incObjectVertical i | i == matchPoint = 0
+                    | otherwise       = i + 1
 
 evalMatch :: State -> State
 evalMatch (State topObject botObject move score) = State
     { sTopObject = topObject
     , sBotObject = botObject
-    , sMove      = move
-    , sScore     = newscore
+    , sMove      = newMove
+    , sScore     = newScore
     }
   where
-    (xTop, _) = topObject
-    (xBot, _) = botObject
-    newscore | (move == Idle) && (xTop == xBot) = score + 1
-             | move == Matching                 = score
-             | otherwise                        = 0
+    (xTop, yTop) = topObject
+    (xBot, _   ) = botObject
+    newMove | newScore == 6      = Stop
+            | match              = Idle
+            | yTop /= matchPoint = Matching
+            | otherwise          = Stop
+    newScore | match     = score + 1
+             | otherwise = score
+    match = fits && yTop == matchPoint
+    fits  = xTop == xBot
+
+matchPoint :: Int
+matchPoint = screenHeight `div` 2

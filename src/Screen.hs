@@ -9,35 +9,58 @@ import           System.Console.ANSI
 import           Mechanics
 import           Internal
 
-scorePosition :: Coord
-scorePosition = (1, 10)
+textPosition :: Coord
+textPosition = (1, 10)
 
 levelDescriptions :: [String]
 levelDescriptions = ["Trivial", "Easy", "Medium", "Hard", "Hardcore", "Absurd"]
 
 drawScreen :: State -> IO ()
-drawScreen (State topObject botObject state score) = do
+drawScreen state@(State _ _ move _) = do
         clearScreen
-        evalSGR state
-        drawLine 0
-        drawLine screenHeight
-        draw topObject ['+']
-        draw botObject ['+']
-        drawScore score
+        evalSGR move
+        drawScreen' state
+
+drawScreen' :: State -> IO ()
+drawScreen' (State topObject botObject move score)
+        | move == Stop = drawGameOver score
+        | otherwise = do
+                drawLine 0
+                drawLine screenHeight
+                draw topObject ['+']
+                draw botObject ['+']
+                drawScore score
+
+drawGameOver :: Int -> IO ()
+drawGameOver score | score == 6 = drawWin
+                   | otherwise  = drawDefeat score
+
+drawWin :: IO ()
+drawWin = draw textPosition "You won the game my dude!"
+
+drawDefeat :: Int -> IO ()
+drawDefeat score =
+        draw textPosition
+                $  "Game Over - Score: "
+                ++ show score
+                ++ ".\n Press r to start over.\n Press q to quit."
 
 drawScore :: Int -> IO ()
 drawScore score =
-        draw scorePosition
+        draw textPosition
                 $  "Level: "
                 ++ show score
                 ++ " - "
                 ++ (levelDescriptions !! score)
+                ++ ".\n Press m to match."
 
 evalSGR :: Move -> IO ()
 evalSGR Idle = setSGR
         [SetConsoleIntensity NormalIntensity, SetColor Foreground Vivid White]
 evalSGR Matching = setSGR
         [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Red]
+evalSGR _ = setSGR
+        [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Green]
 
 drawLine :: Int -> IO ()
 drawLine y = drawLine' (screenWidth, y)
