@@ -31,7 +31,8 @@ moveObjects state@(State topObject botObject move score) maybeInput
     | move == Idle && isNothing maybeInput = moveIdle
         state
         (evalIdleMovement score)
-    | move == Matching || maybeInput == Just Match = evalMatch $ moveMatch state
+    | (move == Matching || maybeInput == Just Match) && move /= Stop = evalMatch
+    $ moveMatch state
     | otherwise = state
 
 evalIdleMovement :: Int -> (Int -> Int)
