@@ -28,12 +28,13 @@ initState = State
 
 moveObjects :: State -> Maybe Input -> State
 moveObjects state@(State topObject botObject move score) maybeInput
-    | move == Idle && isNothing maybeInput = moveIdle
-        state
-        (evalIdleMovement score)
-    | (move == Matching || maybeInput == Just Match) && move /= Stop = evalMatch
-    $ moveMatch state
-    | otherwise = state
+    | isMoveIdle  = moveIdle state (evalIdleMovement score)
+    | isMoveMatch = evalMatch $ moveMatch state
+    | otherwise   = state
+  where
+    isMoveMatch =
+        (move == Matching || maybeInput == Just Match) && move /= Stop
+    isMoveIdle = move == Idle && isNothing maybeInput
 
 evalIdleMovement :: Int -> (Int -> Int)
 evalIdleMovement score | score > 4 = \x -> iterate decObjectHorizontal x !! 4
