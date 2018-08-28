@@ -10,5 +10,5 @@ stack build
 ## Run
 
 ```
-stack exec dino-rush
+stack exec tui-game-haskell-exe
 ```
